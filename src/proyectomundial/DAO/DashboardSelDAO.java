@@ -48,7 +48,7 @@ public class DashboardSelDAO {
             if (contar.next()) {
                 num_selecciones = contar.getByte("cuenta");
             }
-            System.out.println(num_selecciones);
+            //System.out.println(num_selecciones);
         } catch (Exception ex) {
             System.out.println("Fallo en conexion dash");
             Logger.getLogger(DashboardSelDAO.class.getName()).log(Level.SEVERE, null, ex);
@@ -65,7 +65,7 @@ public class DashboardSelDAO {
             if (contar.next()) {
                 num_nacionalidades = contar.getByte("cuenta");
             }
-            System.out.println(num_nacionalidades);
+
         } catch (Exception ex) {
             System.out.println("Fallo en conexion dash");
             Logger.getLogger(DashboardSelDAO.class.getName()).log(Level.SEVERE, null, ex);
@@ -82,7 +82,7 @@ public class DashboardSelDAO {
                     ranking[x] = contar.getInt("cuenta");
                     nacionalidades[x] = contar.getString("nac");
                 }
-                System.out.println(ranking[x]);
+                //System.out.println(ranking[x]);
             }
         } catch (Exception ex) {
             System.out.println("Fallo en conexion dash");

@@ -3,6 +3,7 @@ package proyectomundial;
 
 import java.awt.BorderLayout;
 import static java.awt.BorderLayout.CENTER;
+import java.awt.Button;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -31,6 +32,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.border.LineBorder;
@@ -48,6 +50,7 @@ import org.jfree.data.general.DefaultPieDataset;
 import org.jfree.data.statistics.HistogramDataset;
 import proyectomundial.DAO.AuditoriaDAO;
 import proyectomundial.DAO.DashboardSelDAO;
+import proyectomundial.DAO.ResultadosDAO;
 import proyectomundial.DAO.SeleccionDAO;
 import proyectomundial.model.Seleccion;
 
@@ -55,6 +58,7 @@ public class GUIManual extends JFrame {
 
     SeleccionDAO seleccionDAO = new SeleccionDAO();
     AuditoriaDAO auditoriaDAO = new AuditoriaDAO();
+    ResultadosDAO resultadosDAO = new ResultadosDAO();
     DashboardSelDAO dashboardsel = new DashboardSelDAO();
     // Matrix que permite almancenar la información de las selecciones futbol cargadas
     public String[][] selecciones = null;
@@ -64,6 +68,13 @@ public class GUIManual extends JFrame {
 
     //Matriz que permite almacenar los datos de auditoria
     public String[][] auditoria = null;
+
+    //Matriz que almacena los datos del partido con mas goles
+    public String[][] PartidoConMasGoles = null;
+    public String[][] PartidoConMenosGoles = null;
+
+    //Matriz que almacena los datos del equipo con  mas goles
+    public String[][] EquiposConMasGoles = null;
 
     // Elementos de bara Lateral
     private JPanel jPanelLeft;
@@ -230,9 +241,9 @@ public class GUIManual extends JFrame {
      */
     private void accionHome() {
         jLabelTop.setText("Home");
-        jLabelTop.setForeground(new java.awt.Color(238, 230, 196));
-        //jLabelTopDescription.setText("Bievenido al sistema de gestión de mundiales de fútbol");
+        jLabelTop.setForeground(new Color(255, 255, 255));
 
+        //jLabelTopDescription.setText("Bievenido al sistema de gestión de mundiales de fútbol");
         jPanelMain.removeAll();
         JPanel homePanel = new JPanel();
         JLabel imageHome = new JLabel();
@@ -281,7 +292,7 @@ public class GUIManual extends JFrame {
      * vacía, muestra un botón que permite cargar un archivo CSV con la
      * información de las selelecciones
      */
-    private void accionSelecciones() {
+    private void accionSelecciones() { ////Todo lo que carga el boton de selecciones
         jLabelTop.setText("Selecciones");
         selecciones = seleccionDAO.getSeleccionesMatriz();
 
@@ -348,7 +359,7 @@ public class GUIManual extends JFrame {
      */
     private void accionResultados() {
         jLabelTop.setText("Resultados");
-
+        resultados = resultadosDAO.getResultadosMatriz();
         // Si no hay resultados cargados, muestra el botón de carga de resultados
         if (resultados == null) {
             jPanelMain.removeAll();
@@ -375,7 +386,7 @@ public class GUIManual extends JFrame {
             jPanelMain.revalidate();
         } // Si hay ressultados cargados, llama el método que permite pintar la tabla de resultados
         else {
-            pintarTablaSelecciones();
+            pintarTablaResultados();
         }
     }
 
@@ -414,38 +425,26 @@ public class GUIManual extends JFrame {
      * información de los paneles
      */
     private void accionDashboardSel() {
-        jLabelTop.setText("DashBoard Selecciones");
-        JLabel continentes = new JLabel();
-        //continentes.setIcon(new ImageIcon(getClass().getResource("/resources/dashboard_sel2.png")));
-        //continentes.setSize(219, 190);
-        JLabel selecciones = new JLabel();
-        JTextArea a = new JTextArea();
-        a.setText("En esta sección, teniendo en cuenta los datos que fueron cargados en la matriz de selecciones \n"
-                + "se deben mostrar los siguientes datos:\n\n"
-                + "1. Total de selecciones Cargadas \n"
-                + "2. Número de selecciones por continente (Se puede usar una tabla para pintar esto) \n"
-                + "3. Cantidad de nacionalidades diferentes de los directores técnicos \n"
-                + "4. Ranking de nacionalidades de directores técnicos \n\n"
-                + "Utilice los diferentes componentes gráficos para construir un dashboard lo más estético posible");
-
-        dashboardsel.getPaisesporContinente();
         jPanelMain.removeAll();
+        JPanelreferencia.removeAll();
+        JPanelreferencia.setMaximumSize((new java.awt.Dimension(620, 415)));
+        jLabelTop.setText("DashBoard Selecciones");
+        dashboardsel.getPaisesporContinente();
         jPanelMain.setBackground(Color.white);
         JPanelreferencia.setLayout(new BoxLayout(JPanelreferencia, BoxLayout.Y_AXIS));
         JPanelreferencia.setBackground(Color.white);
         pintar_cuadrosel();
-        showPieChart();
+        showPieChart(); // pinta la gráfica de tarta
         pintar_cuadronac();
-        showBarChart();
+        showBarChart(); // pinta la gráfica de barras
         JScrollPane scrollPane = new JScrollPane(JPanelreferencia);
         scrollPane.setPreferredSize(JPanelreferencia.getPreferredSize());
         scrollPane.setMaximumSize((new java.awt.Dimension(620, 415)));
         JPanel sc = new JPanel();
-        sc.add(scrollPane);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        sc.add(scrollPane, BorderLayout.CENTER);
         sc.setLayout(new BoxLayout(sc, BoxLayout.Y_AXIS));
-        jPanelMain.add(sc, BorderLayout.PAGE_START);
-        //scrollPane.setViewportView(jPanelMain);
-
+        jPanelMain.add(sc, BorderLayout.CENTER);
         jPanelMain.repaint();
         jPanelMain.revalidate();
     }
@@ -461,7 +460,6 @@ public class GUIManual extends JFrame {
         btnDashboardRes.setIcon(new ImageIcon(getClass().getResource("/resources/icons/dashboard_resultados.png")));
         btnDashboardRes.setText("Dash Resultados");
         btnDashboardRes.setForeground(new java.awt.Color(255, 255, 255));
-
         JLabel vacioDashboardResultados = new JLabel();
         jPanelMenuDashboardRes.setBackground(new java.awt.Color(183, 16, 22));
         jPanelMenuDashboardRes.setPreferredSize((new java.awt.Dimension(220, 35)));
@@ -485,25 +483,126 @@ public class GUIManual extends JFrame {
      * información de los paneles
      */
     private void accionDashboardRes() {
-
-        JTextArea a = new JTextArea();
-        a.setText("En esta sección, teniendo en cuenta los datos que fueron cargados en la matriz de resultados \n"
-                + "se deben mostrar los siguientes datos:\n\n"
-                + "1. Número de partidos cargados \n"
-                + "2. Promedio de goles por partido \n"
-                + "3. Partido con más goles y partido con menos goles \n"
-                + "4. Número de partidos dónde hubo un ganador y número de partidos dónde hubo empate \n"
-                + "5. Selcción o selecciones con más goles y con menos goles \n"
-                + "6. Selección con más puntos y menos puntos \n"
-                + "7. Continente o continentes con más goles y menos goles \n"
-                + "8. Clasificados por cada grupo (Clasifican los dos primeros equipos de cada grupo) \n\n"
-                + "Utilice los diferentes componentes gráficos para construir un dashboard lo más estético posible");
-
+        jLabelTop.setText("Dashboard Resultados");
+        PartidoConMasGoles = resultadosDAO.PartidosConMasGolesMatriz();
         jPanelMain.removeAll();
-        jPanelMain.add(a);
+        JPanelreferencia.removeAll();
+        jPanelMain.setBackground(Color.white);
+        JPanelreferencia.setLayout(new BoxLayout(JPanelreferencia, BoxLayout.Y_AXIS));
+        JPanelreferencia.setBackground(Color.white);
+        pintar_numpartidos();
+        pintar_promgol();
+        JPanel panelBotones = new JPanel();
+        panelBotones.setLayout(new GridLayout(1, 2, 30, 0));
+        JLabel titulo1 = new JLabel();
+        titulo1.setText("Partido con Más y Menos Goles");
+        panelBotones.add(titulo1);
+//
+        JButton botonmaxgol = new JButton("Partido con mas goles");
+        botonmaxgol.setSize(500, 500);
+        botonmaxgol.setOpaque(true);
+        botonmaxgol.setForeground(new Color(209, 26, 31));
+        LineBorder border = new LineBorder(new Color(209, 26, 31), 2);
+        botonmaxgol.setBorder(border);
+        botonmaxgol.addActionListener(e -> {
+            PintarTablaPartido_con_mas_goles(1);
+        });
+//        
+        // Agregar el botón a la ventana
+        panelBotones.add(botonmaxgol);
+        //
+        JButton botonmingol = new JButton("Partido con menos goles");
+        botonmingol.setSize(500, 500);
+        botonmingol.setOpaque(true);
+        botonmingol.setForeground(new Color(209, 26, 31));
+        border = new LineBorder(new Color(209, 26, 31), 2);
+        botonmingol.setBorder(border);
+        botonmingol.addActionListener(e -> {
+            PintarTablaPartido_con_mas_goles(0);
+        });
+        panelBotones.add(botonmingol);
+        panelBotones.setBackground(Color.white);
+        //
+        jPanelMain.add(panelBotones, BorderLayout.CENTER);
+        pintar_partidosGanadosEmpatados();
+        pintar_partidosGanadosEmpatados_Num();
+        //
+        JPanel panelBotones2 = new JPanel();
+        panelBotones2.setLayout(new GridLayout(1, 2, 30, 0));
+        JLabel titulo2 = new JLabel();
+        titulo2.setText("Equipos con Más y Menos Goles");
+        
+        JButton consultar = new JButton("Equipo con mas goles");
+        consultar.setSize(500, 500);
+        consultar.setOpaque(true);
+        consultar.addActionListener(e -> {
 
+            String sql3 = "SELECT equipo, SUM(total_goles) AS totalgoles\n"
+                    + "FROM (\n"
+                    + "    SELECT local AS equipo, goles_local AS total_goles\n"
+                    + "    FROM j_hernandez34.partidos\n"
+                    + "    UNION ALL\n"
+                    + "    SELECT visitante AS equipo, goles_visitante AS totalgoles\n"
+                    + "    FROM j_hernandez34.partidos\n"
+                    + ") AS subconsulta\n"
+                    + "GROUP BY equipo\n"
+                    + "ORDER BY totalgoles DESC\n"
+                    + "LIMIT 1;";
+
+            resultadosDAO.EquipoConMasYMenosGoles(sql3);
+            EquiposConMasGoles = resultadosDAO.MatrizEquipoConMasYMenosGoles(sql3);
+            PintarTablaEquipoMasYMenosGoles();
+
+        });
+        panelBotones2.add(titulo2);
+        consultar.setBorder(border);
+        consultar.setForeground(new Color(209, 26, 31));
+        panelBotones2.add(consultar);
+
+        JButton consultar2 = new JButton("Equipo con menos goles");
+        consultar2.setSize(500, 500);
+        consultar2.setOpaque(true);
+
+        consultar2.addActionListener(e -> {
+            String sql3 = "SELECT equipo, MIN(total_goles) AS totalgoles\n"
+                    + "FROM (\n"
+                    + "    SELECT local AS equipo, SUM(goles_local) AS total_goles\n"
+                    + "    FROM j_hernandez34.partidos\n"
+                    + "    GROUP BY local\n"
+                    + "    UNION ALL\n"
+                    + "    SELECT visitante AS equipo, SUM(goles_visitante) AS total_goles\n"
+                    + "    FROM j_hernandez34.partidos\n"
+                    + "    GROUP BY visitante\n"
+                    + ") AS subconsulta\n"
+                    + "GROUP BY equipo\n"
+                    + "HAVING MIN(total_goles) = (\n"
+                    + "    SELECT MIN(total_goles) AS totalgoles\n"
+                    + "    FROM (\n"
+                    + "        SELECT local AS equipo, SUM(goles_local) AS total_goles\n"
+                    + "        FROM j_hernandez34.partidos\n"
+                    + "        GROUP BY local\n"
+                    + "        UNION ALL\n"
+                    + "        SELECT visitante AS equipo, SUM(goles_visitante) AS total_goles\n"
+                    + "        FROM j_hernandez34.partidos\n"
+                    + "        GROUP BY visitante\n"
+                    + "    ) AS subconsulta\n"
+                    + ");";
+
+            resultadosDAO.EquipoConMasYMenosGoles(sql3);
+            EquiposConMasGoles = resultadosDAO.MatrizEquipoConMasYMenosGoles(sql3);
+            PintarTablaEquipoMasYMenosGoles();
+
+        });
+        consultar2.setBorder(border);
+        consultar2.setForeground(new Color(209, 26, 31));
+        panelBotones2.add(consultar2);
+        panelBotones2.setBackground(Color.white);
+        
+        jPanelMain.add(panelBotones2);
+        
         jPanelMain.repaint();
         jPanelMain.revalidate();
+
     }
 
     /**
@@ -605,11 +704,42 @@ public class GUIManual extends JFrame {
         panelBotones.setLayout(new GridLayout(1, 2, 30, 0));
 
         JButton buscar = new JButton();
+
+////////////////////////////////////////////////////////////        
+        buscar.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Acción a realizar cuando se presione el botón
+                String textobusqueda = field.getText();
+                selecciones = seleccionDAO.getSeleccionesMatrizBuscar(textobusqueda);
+                //Validar por si no enceuntra nada
+                if (selecciones != null) {
+                    pintarTablaSelecciones();
+                } else {
+                    ///Quiero cambiar el metodo para validacion :(
+                    selecciones = new String[1][5];
+                    selecciones[0][0] = "------";
+                    selecciones[0][1] = "Busqueda";
+                    selecciones[0][2] = "No";
+                    selecciones[0][3] = "Encontrada";
+                    selecciones[0][4] = "-----";
+                    pintarTablaSelecciones();
+                }
+            }
+        });
+/////////////////////////////////////////////////////////////////
         buscar.setText("Buscar");
         panelBotones.add(buscar);
 
         JButton limpiar = new JButton();
-        limpiar.setText("Ver Todos");
+        limpiar.setText("Regresar");
+        limpiar.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                selecciones = seleccionDAO.getSeleccionesMatriz();
+                pintarTablaSelecciones();
+            }
+        });
         panelBotones.add(limpiar);
         form.add(panelBotones);
 
@@ -704,11 +834,41 @@ public class GUIManual extends JFrame {
         panelBotones.setLayout(new GridLayout(1, 2, 30, 0));
 
         JButton buscar = new JButton();
+
+        buscar.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Acción a realizar cuando se presione el botón
+                String textobusqueda = field.getText();
+                resultados = resultadosDAO.getResultadoMatrizBuscar(textobusqueda);
+                //Validar por si no enceuntra nada
+                if (resultados != null) {
+                    pintarTablaResultados();
+                } else {
+                    ///Quiero cambiar el metodo para validacion :(
+                    resultados = new String[1][5];
+                    resultados[0][0] = "------";
+                    resultados[0][1] = "Busqueda";
+                    resultados[0][2] = "No";
+                    resultados[0][3] = "Encontrada";
+                    resultados[0][4] = "-----";
+                    pintarTablaResultados();
+                }
+            }
+        });
+
         buscar.setText("Buscar");
         panelBotones.add(buscar);
 
         JButton limpiar = new JButton();
-        limpiar.setText("Ver Todos");
+        limpiar.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                resultados = resultadosDAO.getResultadosMatriz();
+                pintarTablaResultados();
+            }
+        });
+        limpiar.setText("Regresar");
         panelBotones.add(limpiar);
         form.add(panelBotones);
 
@@ -853,7 +1013,7 @@ public class GUIManual extends JFrame {
         //create chartPanel to display chart(graph)
         ChartPanel barChartPanel = new ChartPanel(piechart);
         barChartPanel.removeAll();
-        barChartPanel.setSize(10, 190);
+        barChartPanel.setMaximumSize(new Dimension(820, 520));
         //barChartPanel.add(barChartPanel, BorderLayout.CENTER);
         barChartPanel.validate();
         JPanelreferencia.add(barChartPanel, BorderLayout.CENTER);
@@ -867,7 +1027,7 @@ public class GUIManual extends JFrame {
         dataset.setValue(200, "Amount", "january");
         dataset.setValue(150, "Amount", "february");
         dataset.setValue(18, "Amount", "march");
-        
+
         //create chart
         JFreeChart linechart = ChartFactory.createLineChart("contribution", "monthly", "amount",
                 dataset, PlotOrientation.VERTICAL, false, true, false);
@@ -923,24 +1083,24 @@ public class GUIManual extends JFrame {
         dataset.setValue(dashboardsel.ranking[3], "Nacionaliad", dashboardsel.nacionalidades[3]);
         dataset.setValue(dashboardsel.ranking[4], "Nacionaliad", dashboardsel.nacionalidades[4]);
         JFreeChart chart = ChartFactory.createBarChart("Ranking de Paises con mas entrenadores", "Nacionalidades", "Numero de entrenadores",
-                dataset, PlotOrientation.VERTICAL, false, true, false);
-
+                dataset, PlotOrientation.VERTICAL, false, true, true);
+        Color clr3 = new Color(159, 14, 20);
         CategoryPlot categoryPlot = chart.getCategoryPlot();
-        //categoryPlot.setRangeGridlinePaint(Color.BLUE);
+        categoryPlot.setRangeGridlinePaint(clr3);
         categoryPlot.setBackgroundPaint(Color.WHITE);
         BarRenderer renderer = (BarRenderer) categoryPlot.getRenderer();
-        Color clr3 = new Color(159, 14, 20);
+
         renderer.setSeriesPaint(0, clr3);
 
         ChartPanel barpChartPanel = new ChartPanel(chart);
         barpChartPanel.removeAll();
-        //barpChartPanel.add(barpChartPanel, BorderLayout.CENTER);
-        barpChartPanel.validate();
-        JPanelreferencia.add(barpChartPanel);
+        barpChartPanel.setMaximumSize(new Dimension(820, 520));
+        JPanelreferencia.add(barpChartPanel, BorderLayout.CENTER);
+        JPanelreferencia.validate();
 
     }
 //=======================================    
-//Pintar Velocimetro
+//Pintar Labels
 
     private void pintar_cuadrosel() {
         JLabel sel = new JLabel();
@@ -954,33 +1114,265 @@ public class GUIManual extends JFrame {
         sel.setHorizontalAlignment(SwingConstants.CENTER);
         sel.setBorder(border);
         sel.setPreferredSize(new Dimension(605, 100));
-        JPanelreferencia.add(sel);
+        JPanelreferencia.add(sel, BorderLayout.CENTER);
     }
 
     private void pintar_cuadronac() {
+        JLabel sel1 = new JLabel();
+        sel1.setBackground(new Color(255, 49, 49));
+        sel1.setOpaque(true);
+        Font font = sel1.getFont();
+        Font biggerFont = font.deriveFont(font.getSize() + 10f); // Aumenta el tamaño de fuente en 5 puntos
+        sel1.setFont(biggerFont);
+        String texto = String.valueOf(dashboardsel.getnacionalidades());
+        sel1.setText("                                      Hay " + texto + "                                      ");
+        sel1.setForeground(new Color(255, 255, 255));
+        LineBorder border = new LineBorder(new Color(255, 49, 49), 2);
+        sel1.setHorizontalAlignment(SwingConstants.CENTER);
+        sel1.setBorder(border);
+        sel1.setSize(new Dimension(605, 100));
+        JPanelreferencia.add(sel1);
+//
+        JLabel sel = new JLabel();
+        //Font font = sel.getFont();
+        //Font biggerFont = font.deriveFont(font.getSize() + 10f); // Aumenta el tamaño de fuente en 5 puntos
+        sel.setFont(biggerFont);
+        texto = String.valueOf(dashboardsel.getnacionalidades());
+        sel.setText("diferentes nacionalidades de los directores técnicos");
+        sel.setForeground(new Color(255, 49, 49));
+        //LineBorder border = new LineBorder(new Color(255, 49, 49), 2);
+        sel.setHorizontalAlignment(SwingConstants.CENTER);
+        sel.setBorder(border);
+        sel.setSize(new Dimension(605, 100));
+        JPanelreferencia.add(sel1, BorderLayout.CENTER);
+        JPanelreferencia.add(sel, BorderLayout.CENTER);
+    }
+
+    private void pintar_numpartidos() {
+        JLabel sel = new JLabel();
+        Font font = sel.getFont();
+        Font biggerFont = font.deriveFont(font.getSize() + 5f); // Aumenta el tamaño de fuente en 5 puntos
+        sel.setFont(biggerFont);
+        String texto = String.valueOf(resultadosDAO.NumeroDePartidos());
+        sel.setText("" + texto + " Partidos cargados");
+        sel.setForeground(new Color(226, 209, 171)); //226, 209, 171
+        sel.setBackground(new Color(209, 26, 31)); //209, 26, 31
+        sel.setOpaque(true);
+        LineBorder border = new LineBorder(new Color(209, 26, 31), 2);
+        sel.setHorizontalAlignment(SwingConstants.CENTER);
+        sel.setBorder(border);
+        sel.setPreferredSize(new Dimension(300, 60));
+        jPanelMain.add(sel, BorderLayout.EAST);
+    }
+
+    private void pintar_promgol() {
+        JLabel sel = new JLabel();
+        Font font = sel.getFont();
+        Font biggerFont = font.deriveFont(font.getSize() + 5f); // Aumenta el tamaño de fuente en 5 puntos
+        sel.setFont(biggerFont);
+        String texto = String.valueOf(resultadosDAO.PromedioDeGoles());
+        sel.setText("Promedio de " + texto + " \n goles por partido");
+        sel.setForeground(new Color(226, 209, 171));
+        sel.setBackground(new Color(209, 26, 31));
+        sel.setOpaque(true);
+        LineBorder border = new LineBorder(new Color(209, 26, 31), 2);
+        sel.setHorizontalAlignment(SwingConstants.CENTER);
+        sel.setBorder(border);
+        sel.setPreferredSize(new Dimension(300, 60));
+        jPanelMain.add(sel, BorderLayout.WEST);
+    }
+
+    private void pintar_partidosGanadosEmpatados() {
+        //Label partidos ganados como local
+        JLabel sel = new JLabel();
+        Font font = sel.getFont();
+        Font biggerFont = font.deriveFont(font.getSize() + 2f); // Aumenta el tamaño de fuente en 5 puntos
+        sel.setFont(biggerFont);
+        String texto = String.valueOf(resultadosDAO.PromedioDeGoles());
+        sel.setText("Partidos ganados local");
+        sel.setForeground(new Color(226, 209, 171));
+        sel.setBackground(new Color(209, 26, 31));
+        sel.setOpaque(true);
+        LineBorder border = new LineBorder(new Color(209, 26, 31), 2);
+        sel.setHorizontalAlignment(SwingConstants.CENTER);
+        sel.setBorder(border);
+        sel.setPreferredSize(new Dimension(200, 60));
+        jPanelMain.add(sel, BorderLayout.EAST);
+
+        //Label partidos ganados como visitante
+        JLabel sel2 = new JLabel();
+        font = sel2.getFont();
+        biggerFont = font.deriveFont(font.getSize() + 2f); // Aumenta el tamaño de fuente en 5 puntos
+        sel2.setFont(biggerFont);
+        texto = String.valueOf(resultadosDAO.PromedioDeGoles());
+        sel2.setText("Partidos ganados visitante");
+        sel2.setForeground(new Color(226, 209, 171));
+        sel2.setBackground(new Color(209, 26, 31));
+        sel2.setOpaque(true);
+        border = new LineBorder(new Color(209, 26, 31), 2);
+        sel2.setHorizontalAlignment(SwingConstants.CENTER);
+        sel2.setBorder(border);
+        sel2.setPreferredSize(new Dimension(200, 60));
+        jPanelMain.add(sel2, BorderLayout.CENTER);
+
+        //Label partidos empatados
+        JLabel sel3 = new JLabel();
+        font = sel3.getFont();
+        biggerFont = font.deriveFont(font.getSize() + 2f); // Aumenta el tamaño de fuente en 5 puntos
+        sel3.setFont(biggerFont);
+        texto = String.valueOf(resultadosDAO.PromedioDeGoles());
+        sel3.setText("Partidos empatados");
+        sel3.setForeground(new Color(226, 209, 171));
+        sel3.setBackground(new Color(209, 26, 31));
+        sel3.setOpaque(true);
+        border = new LineBorder(new Color(209, 26, 31), 2);
+        sel3.setHorizontalAlignment(SwingConstants.CENTER);
+        sel3.setBorder(border);
+        sel3.setPreferredSize(new Dimension(200, 60));
+        jPanelMain.add(sel3, BorderLayout.WEST);
+    }
+
+    private void pintar_partidosGanadosEmpatados_Num() {
+        //Label partidos ganados como local
         JLabel sel = new JLabel();
         Font font = sel.getFont();
         Font biggerFont = font.deriveFont(font.getSize() + 10f); // Aumenta el tamaño de fuente en 5 puntos
         sel.setFont(biggerFont);
-        String texto = String.valueOf(dashboardsel.getnacionalidades());
-        sel.setText("Hay " + texto + " \ndiferentes nacionalidades de los directores técnicos");
-        sel.setForeground(new Color(255, 49, 49));
-        LineBorder border = new LineBorder(new Color(255, 49, 49), 2);
+        sel.setText(resultadosDAO.getPartidosDondeGanaLocal());
+        sel.setForeground(new Color(209, 26, 31));
+        sel.setBackground(new Color(255, 255, 255));
+        sel.setOpaque(true);
+        LineBorder border = new LineBorder(new Color(209, 26, 31), 2);
         sel.setHorizontalAlignment(SwingConstants.CENTER);
         sel.setBorder(border);
-        sel.setPreferredSize(new Dimension(605, 100));
-        JPanelreferencia.add(sel);
+        sel.setPreferredSize(new Dimension(200, 60));
+        jPanelMain.add(sel, BorderLayout.EAST);
+
+        //Label partidos ganados como visitante
+        JLabel sel2 = new JLabel();
+        font = sel2.getFont();
+        biggerFont = font.deriveFont(font.getSize() + 10f); // Aumenta el tamaño de fuente en 5 puntos
+        sel2.setFont(biggerFont);
+        sel2.setText(resultadosDAO.getPartidosDondeGanaVisitante());
+        sel2.setForeground(new Color(209, 26, 31));
+        sel2.setBackground(new Color(255, 255, 255));
+        sel2.setOpaque(true);
+        border = new LineBorder(new Color(209, 26, 31), 2);
+        sel2.setHorizontalAlignment(SwingConstants.CENTER);
+        sel2.setBorder(border);
+        sel2.setPreferredSize(new Dimension(200, 60));
+        jPanelMain.add(sel2, BorderLayout.CENTER);
+
+        //Label partidos empatados
+        JLabel sel3 = new JLabel();
+        font = sel3.getFont();
+        biggerFont = font.deriveFont(font.getSize() + 10f); // Aumenta el tamaño de fuente en 5 puntos
+        sel3.setFont(biggerFont);
+        sel3.setText(resultadosDAO.getPartidosDondeEmpata());
+        sel3.setForeground(new Color(209, 26, 31));
+        sel3.setBackground(new Color(255, 255, 255));
+        sel3.setOpaque(true);
+        border = new LineBorder(new Color(209, 26, 31), 2);
+        sel3.setHorizontalAlignment(SwingConstants.CENTER);
+        sel3.setBorder(border);
+        sel3.setPreferredSize(new Dimension(200, 60));
+        jPanelMain.add(sel3, BorderLayout.WEST);
     }
 
-    private void pintar_velocimetro() {
-        Graphics g = null;
-        super.paintComponents(g);
-        int valorActual = 32;
-        int centroX = getWidth() / 2;
-        int centroY = getHeight() / 2;
-        int radioExterno = 100;
-        int radioInterno = 90;
+    private void PintarTablaPartido_con_mas_goles(int bandera) {
 
-        Velocimetro.dibujarVelocimetro(g, valorActual, centroX, centroY, radioExterno, radioInterno);
+        String[] columnNames = {"Grupo", "Local", "Visitante", "Continente L", "Continente V", "Goles L", "Goles V"};
+        PartidoConMasGoles = resultadosDAO.PartidosConMasGolesMatriz();
+        PartidoConMenosGoles = resultadosDAO.PartidosConMenosGolesMatriz();
+        JTable table = null;
+        JLabel label = new JLabel();
+        
+        if (bandera == 1) {
+            table = new JTable(PartidoConMasGoles, columnNames);
+            table.setRowHeight(30);
+            label.setText("Partido con mas goles");
+        }
+        if (bandera == 0) {
+            table = new JTable(PartidoConMenosGoles, columnNames);
+            table.setRowHeight(30);
+            label.setText("Partido con menos goles");
+
+        }
+
+        JPanel form = new JPanel();
+        form.setLayout(new GridLayout(4, 1, 0, 0));
+
+        form.add(label);
+
+        JPanel panelBotones = new JPanel();
+        panelBotones.setLayout(new GridLayout(1, 2, 30, 20));
+
+        JButton Regresar = new JButton();
+        Regresar.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                accionDashboardRes();
+            }
+        });
+        Regresar.setText("Regresar");
+        panelBotones.add(Regresar);
+        form.add(panelBotones);
+        form.setBackground(Color.white);
+
+        JPanel seleccionesPanel = new JPanel();
+        seleccionesPanel.setLayout(new BoxLayout(seleccionesPanel, BoxLayout.Y_AXIS));
+        seleccionesPanel.setPreferredSize((new java.awt.Dimension(620, 180)));
+        seleccionesPanel.setMaximumSize(jPanelRight.getPreferredSize());
+        seleccionesPanel.setBackground(Color.white);
+        JScrollPane scrollPane = new JScrollPane(table);
+        seleccionesPanel.add(form);
+        seleccionesPanel.add(scrollPane);
+        jPanelMain.removeAll();
+        jPanelMain.add(seleccionesPanel);
+        jPanelMain.repaint();
+        jPanelMain.revalidate();
+    }
+
+    private void PintarTablaEquipoMasYMenosGoles() {
+
+        String[] columnNames = {"Equipo", "Goles"};
+        JTable table = new JTable(EquiposConMasGoles, columnNames);
+        table.setRowHeight(30);
+
+        JPanel form = new JPanel();
+        form.setLayout(new GridLayout(4, 1, 0, 0));
+
+        JLabel label = new JLabel();
+        label.setText("Equipo con mas y menos goles");
+        form.add(label);
+
+        JPanel panelBotones = new JPanel();
+        panelBotones.setLayout(new GridLayout(1, 2, 30, 20));
+
+        JButton Regresar = new JButton();
+        Regresar.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                accionDashboardRes();
+            }
+        });
+        Regresar.setText("Regresar");
+        panelBotones.add(Regresar);
+        form.add(panelBotones);
+
+        JPanel seleccionesPanel = new JPanel();
+        seleccionesPanel.setLayout(new BoxLayout(seleccionesPanel, BoxLayout.Y_AXIS));
+        seleccionesPanel.setPreferredSize((new java.awt.Dimension(620, 410)));
+        seleccionesPanel.setMaximumSize(jPanelRight.getPreferredSize());
+
+        JScrollPane scrollPane = new JScrollPane(table);
+        seleccionesPanel.add(form);
+        seleccionesPanel.add(scrollPane);
+
+        jPanelMain.removeAll();
+        jPanelMain.add(seleccionesPanel, BorderLayout.PAGE_START);
+        jPanelMain.repaint();
+        jPanelMain.revalidate();
+
     }
 }
